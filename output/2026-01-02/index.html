@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube変動ダッシュボード - 2026-01-02</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f0f2f5;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .header .date { font-size: 0.95rem; opacity: 0.85; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+        .notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #664d03;
+        }
+
+        .summary-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .summary-card h2 { font-size: 1.2rem; margin-bottom: 0.75rem; color: #1a1a2e; }
+        .summary-card p { font-size: 1rem; color: #495057; }
+
+        .section { margin-bottom: 2rem; }
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #6c757d;
+            transition: box-shadow 0.2s;
+        }
+        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .card--high { border-left-color: #dc3545; background: #fff5f5; }
+        .card--medium { border-left-color: #0d6efd; }
+        .card--low { border-left-color: #adb5bd; }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
+        .card-header h3 { font-size: 1rem; font-weight: 600; flex: 1; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .badge--high { background: #dc3545; color: #fff; }
+        .badge--medium { background: #0d6efd; color: #fff; }
+        .badge--low { background: #e9ecef; color: #6c757d; }
+
+        .card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+        .card-meta span {
+            font-size: 0.8rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .analysis { font-size: 0.9rem; color: #495057; margin-bottom: 0.75rem; }
+
+        .changes { border-top: 1px solid #e9ecef; padding-top: 0.75rem; }
+        .change-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.85rem;
+        }
+        .change-label { color: #6c757d; }
+        .change-positive { color: #198754; font-weight: 600; }
+        .change-negative { color: #dc3545; font-weight: 600; }
+        .change-neutral { color: #6c757d; font-weight: 600; }
+
+        .new-video-list { list-style: none; }
+        .new-video-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #198754;
+        }
+        .new-video-item h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .new-video-item .meta { font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem; }
+        .new-video-item .analysis { margin-bottom: 0; }
+
+        .disappeared-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .disappeared-item {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-family: monospace;
+        }
+
+        .category-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .category-table th {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .category-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+        .category-table tr:last-child td { border-bottom: none; }
+        .highlight-count { color: #dc3545; font-weight: 600; }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #adb5bd;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 480px) {
+            .card-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.3rem; }
+            .container { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>YouTube変動ダッシュボード</h1>
+        <p class="date">2026年01月02日 12:00</p>
+    </header>
+
+    <main class="container">
+        
+        <div class="notice">
+            AI分析はスキップされました。以下は未分析データです。
+        </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+    </main>
+
+    <footer class="footer">
+        Generated by newspaper-generator
+    </footer>
+</body>
+</html>
